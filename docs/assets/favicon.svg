@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <!-- Compact lens + handle, optimized for tiny rendering -->
+  <circle cx="13" cy="13" r="9" fill="none" stroke="url(#fav-grad)" stroke-width="3"/>
+  <line x1="20" y1="20" x2="27" y2="27" stroke="url(#fav-grad)" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="22" cy="6" r="2" fill="url(#fav-grad)"/>
+</svg>

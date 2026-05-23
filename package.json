@@ -1,0 +1,118 @@
+{
+  "name": "loglens-vscode",
+  "displayName": "LogLens — MCP Log Investigator for Claude Code",
+  "description": "Schema-driven log analysis tools for Claude Code. Auto-installs an MCP server; talk to Claude Code in chat to investigate production issues or generate analysis schemas. No API key required.",
+  "version": "0.1.0",
+  "publisher": "loglens",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "log analysis",
+    "ai",
+    "debugging",
+    "rca",
+    "claude",
+    "claude code",
+    "mcp",
+    "module understanding"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "loglens.setupMcp",
+        "title": "LogLens: Setup MCP Integration for Claude Code",
+        "category": "LogLens"
+      },
+      {
+        "command": "loglens.validateSchemas",
+        "title": "LogLens: Validate Schemas",
+        "category": "LogLens"
+      },
+      {
+        "command": "loglens.listCategories",
+        "title": "LogLens: List Issue Categories",
+        "category": "LogLens"
+      },
+      {
+        "command": "loglens.openInClaudeCode",
+        "title": "LogLens: Open Claude Code",
+        "category": "LogLens"
+      },
+      {
+        "command": "loglens.copyExplainPrompt",
+        "title": "LogLens: Copy 'Explain this module' Prompt",
+        "category": "LogLens"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "loglens.copyExplainPrompt",
+          "when": "explorerResourceIsFolder",
+          "group": "loglens@1"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "loglens",
+          "title": "LogLens",
+          "icon": "$(search)"
+        }
+      ]
+    },
+    "views": {
+      "loglens": [
+        {
+          "id": "loglens.schemaExplorer",
+          "name": "Schemas",
+          "type": "tree"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "LogLens",
+      "properties": {
+        "loglens.schemaFolder": {
+          "type": "string",
+          "default": ".loganalysis",
+          "description": "Folder name (relative to workspace root) where schemas are stored."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "tsc -p ./ && npm run compile:mcp && npm run build:icon",
+    "compile:mcp": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/mcp-server.mjs --external:vscode --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
+    "build:icon": "node scripts/build-icon.mjs",
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "jsonc-parser": "^3.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0"
+  }
+}

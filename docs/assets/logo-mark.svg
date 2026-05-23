@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="LogLens">
+  <title>LogLens</title>
+  <defs>
+    <linearGradient id="mark-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+  </defs>
+  <!-- Lens ring -->
+  <circle cx="52" cy="52" r="40" fill="none" stroke="url(#mark-grad)" stroke-width="10"/>
+  <!-- Log lines inside lens -->
+  <line x1="32" y1="38" x2="72" y2="38" stroke="url(#mark-grad)" stroke-width="5" stroke-linecap="round"/>
+  <line x1="32" y1="52" x2="66" y2="52" stroke="url(#mark-grad)" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="32" y1="66" x2="70" y2="66" stroke="url(#mark-grad)" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+  <!-- Handle -->
+  <line x1="82" y1="82" x2="108" y2="108" stroke="url(#mark-grad)" stroke-width="12" stroke-linecap="round"/>
+  <!-- AI spark dot at top-right -->
+  <circle cx="86" cy="22" r="6" fill="url(#mark-grad)"/>
+</svg>

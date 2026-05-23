@@ -1,0 +1,16 @@
+.vscode/**
+.vscode-test/**
+src/**
+scripts/**
+docs/**
+.gitignore
+tsconfig.json
+*.map
+*.vsix
+reference/**
+CHANGELOG.md.bak
+PRE_RELEASE_CHECKLIST.md
+**/*.ts
+!dist/**
+# images/ and node_modules/ (production deps) are intentionally INCLUDED.
+# vsce auto-prunes devDependencies from node_modules.

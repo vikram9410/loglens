@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 128" fill="none" role="img" aria-label="LogLens">
+  <title>LogLens</title>
+  <defs>
+    <linearGradient id="loglens-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="loglens-text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="60%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Magnifying-glass mark -->
+  <g transform="translate(16, 16)">
+    <!-- Lens ring -->
+    <circle cx="44" cy="44" r="36" fill="none" stroke="url(#loglens-grad)" stroke-width="8"/>
+    <!-- Three log lines inside lens (decreasing opacity → AI 'reading' the logs) -->
+    <line x1="26" y1="32" x2="62" y2="32" stroke="url(#loglens-grad)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="26" y1="44" x2="56" y2="44" stroke="url(#loglens-grad)" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+    <line x1="26" y1="56" x2="58" y2="56" stroke="url(#loglens-grad)" stroke-width="4" stroke-linecap="round" opacity="0.85"/>
+    <!-- Handle -->
+    <line x1="70" y1="70" x2="92" y2="92" stroke="url(#loglens-grad)" stroke-width="10" stroke-linecap="round"/>
+    <!-- AI 'spark' dot at top-right of lens -->
+    <circle cx="74" cy="20" r="5" fill="url(#loglens-grad)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="136" y="80"
+        font-family="Inter, -apple-system, 'Segoe UI', sans-serif"
+        font-size="64"
+        font-weight="800"
+        letter-spacing="-2"
+        fill="url(#loglens-text-grad)">LogLens</text>
+</svg>

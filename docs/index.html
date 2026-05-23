@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogLens — AI Log Investigator for Claude Code</title>
+<meta name="description" content="VS Code extension that turns Claude Code into a domain-aware log investigator for your service. Schema-driven, no API key required.">
+<meta property="og:title" content="LogLens — AI Log Investigator for Claude Code">
+<meta property="og:description" content="Schema-driven log analysis tools for Claude Code. No API key required.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/logo.svg">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'lens-bg': '#0a0a0f',
+          'lens-surface': '#13131c',
+          'lens-card': '#1a1a26',
+          'lens-border': '#2a2a3a',
+          'lens-primary': '#a78bfa',
+          'lens-primary-bright': '#c4b5fd',
+          'lens-accent': '#60a5fa',
+        },
+        fontFamily: {
+          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { background: #0a0a0f; color: #e5e7eb; }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(167, 139, 250, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(167, 139, 250, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .card-glow {
+    transition: all 0.3s ease;
+  }
+  .card-glow:hover {
+    border-color: rgba(167, 139, 250, 0.4);
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.15);
+    transform: translateY(-2px);
+  }
+  .code-block {
+    background: #0d0d15;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  .code-block .keyword { color: #c4b5fd; }
+  .code-block .string { color: #86efac; }
+  .code-block .comment { color: #6b7280; }
+  .code-block .number { color: #fbbf24; }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    color: white;
+    font-weight: 700;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+  }
+  details summary { cursor: pointer; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary .arrow { transform: rotate(90deg); }
+  .arrow { transition: transform 0.2s ease; display: inline-block; }
+  nav a { transition: color 0.2s ease; }
+  nav a:hover { color: #c4b5fd; }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ─── NAV ─────────────────────────────────────────────────────────── -->
+<nav class="sticky top-0 z-50 bg-lens-bg/80 backdrop-blur-md border-b border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#hero" class="flex items-center gap-2 font-bold text-xl">
+      <img src="assets/logo-mark.svg" alt="" width="28" height="28">
+      <span class="gradient-text">LogLens</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm">
+      <a href="#features" class="text-gray-300">Features</a>
+      <a href="#install" class="text-gray-300">Install</a>
+      <a href="#how-it-works" class="text-gray-300">How it works</a>
+      <a href="#tools" class="text-gray-300">Tools</a>
+      <a href="#faq" class="text-gray-300">FAQ</a>
+      <a href="https://github.com/your-org/loglens-vscode" class="text-gray-300">GitHub</a>
+    </div>
+    <a href="#install" class="bg-lens-primary hover:bg-lens-primary-bright text-lens-bg font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Get Started</a>
+  </div>
+</nav>
+
+<!-- ─── HERO ─────────────────────────────────────────────────────────── -->
+<section id="hero" class="grid-bg relative overflow-hidden">
+  <div class="max-w-6xl mx-auto px-6 py-24 md:py-32 text-center">
+    <img src="assets/logo-mark.svg" alt="LogLens" width="96" height="96" class="mx-auto mb-8">
+    <div class="inline-flex items-center gap-2 bg-lens-card border border-lens-border rounded-full px-4 py-1.5 text-xs text-lens-primary mb-8">
+      <span class="w-2 h-2 rounded-full bg-lens-primary animate-pulse"></span>
+      Powered by Claude Code · No API key required
+    </div>
+    <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+      Turn Claude Code into a<br>
+      <span class="gradient-text">domain-aware log investigator</span>
+    </h1>
+    <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+      Commit a small <code class="text-lens-primary font-mono text-base">.loganalysis/</code> folder describing your service's error patterns. Your team installs LogLens and immediately asks Claude Code in chat: <em class="text-gray-300">"Checkout is failing for some users, requestId is req-abc-123."</em>
+    </p>
+    <div class="flex flex-wrap justify-center gap-4 mb-12">
+      <a href="#install" class="bg-lens-primary hover:bg-lens-primary-bright text-lens-bg font-semibold px-6 py-3 rounded-lg transition-colors">Install Extension</a>
+      <a href="https://github.com/your-org/loglens-vscode" class="bg-lens-card hover:bg-lens-border border border-lens-border font-semibold px-6 py-3 rounded-lg transition-colors">View on GitHub</a>
+    </div>
+
+    <!-- Hero "demo" — fake chat interaction -->
+    <div class="max-w-3xl mx-auto bg-lens-card border border-lens-border rounded-xl p-6 text-left shadow-2xl">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <span class="ml-auto">Claude Code · LogLens MCP</span>
+      </div>
+      <div class="space-y-3 font-mono text-sm">
+        <div class="text-gray-400"><span class="text-blue-400">›</span> Use LogLens to investigate: checkout API returning 500 errors</div>
+        <div class="bg-lens-surface rounded-lg p-3 border-l-2 border-lens-primary">
+          <div class="text-lens-primary text-xs mb-1">⚡ LogLens [start_investigation]</div>
+          <div class="text-gray-300">Matched: <strong>API Errors</strong>. Please share the <code class="text-lens-primary">requestId</code> from the failed response.</div>
+        </div>
+        <div class="text-gray-400"><span class="text-blue-400">›</span> requestId is req-abc-123</div>
+        <div class="bg-lens-surface rounded-lg p-3 border-l-2 border-lens-primary">
+          <div class="text-lens-primary text-xs mb-1">⚡ LogLens · Investigation Context</div>
+          <div class="text-gray-300 space-y-2">
+            <div>📋 Loki query: <code class="text-green-400">{app="checkout"} |= "req-abc-123"</code></div>
+            <div>🔍 Look for: <code class="text-yellow-400">[API-001] Unhandled exception in handler</code></div>
+            <div>📖 Playbook: <code class="text-purple-400">PLAY-001 — Trace the 500 to its throw site</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROBLEM / SOLUTION ─────────────────────────────────────────────── -->
+<section class="bg-lens-surface border-y border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-20">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Generic AI is bad at logs</h2>
+    <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+      Pasting 10k log lines into a chatbot gets you generic advice. LogLens makes Claude Code domain-aware — it knows your modules, your error patterns, your correlation IDs.
+    </p>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+        <div class="text-red-400 text-sm font-semibold mb-3">❌ WITHOUT LOGLENS</div>
+        <ul class="space-y-2 text-gray-300 text-sm">
+          <li>• Pastes raw logs at ChatGPT → gets generic advice</li>
+          <li>• Each issue needs a different ID — hard to remember which</li>
+          <li>• Knowledge of error patterns lives in seniors' heads</li>
+          <li>• New QA/support takes weeks to onboard</li>
+          <li>• Most AI tools need an API key + per-token cost</li>
+        </ul>
+      </div>
+      <div class="bg-lens-card border border-lens-primary/30 rounded-xl p-6">
+        <div class="text-lens-primary text-sm font-semibold mb-3">✓ WITH LOGLENS</div>
+        <ul class="space-y-2 text-gray-300 text-sm">
+          <li>• Claude returns module-specific patterns and root causes</li>
+          <li>• Claude tells you exactly which ID to collect for your symptom</li>
+          <li>• Schemas live in the repo and evolve with your code</li>
+          <li>• Teammates install the extension and use chat from day one</li>
+          <li>• Uses Claude Code's own LLM — no extra cost</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FEATURES ───────────────────────────────────────────────────────── -->
+<section id="features" class="max-w-6xl mx-auto px-6 py-24">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Everything you need to investigate</h2>
+  <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+    Schema-driven by design. AI-generated by default. Always reviewable. Always in your repo.
+  </p>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🔍</div>
+      <h3 class="font-bold text-lg mb-2">Guided investigations</h3>
+      <p class="text-gray-400 text-sm">Describe an issue in plain English → Claude asks for the right correlation ID → returns Loki queries, error patterns, and playbook.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🧠</div>
+      <h3 class="font-bold text-lg mb-2">AI schema generation</h3>
+      <p class="text-gray-400 text-sm">Ask Claude to scan your codebase; it generates a <code class="text-lens-primary text-xs">.loganalysis/</code> draft. Review, refine, commit, share with team.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">📖</div>
+      <h3 class="font-bold text-lg mb-2">Module Q&A</h3>
+      <p class="text-gray-400 text-sm">Right-click any folder → Claude reads the code and explains purpose, data flow, error patterns, and debugging tips.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🔬</div>
+      <h3 class="font-bold text-lg mb-2">Log analysis</h3>
+      <p class="text-gray-400 text-sm">Paste raw logs → Claude matches against known patterns and produces a structured root cause with line attribution.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🚀</div>
+      <h3 class="font-bold text-lg mb-2">Zero API key</h3>
+      <p class="text-gray-400 text-sm">Uses Claude Code's own LLM via MCP. No Anthropic / OpenAI key needed. No per-token billing.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">👥</div>
+      <h3 class="font-bold text-lg mb-2">Team-friendly</h3>
+      <p class="text-gray-400 text-sm">Schemas live in your repo. Teammates install LogLens once and start debugging immediately — no ramp-up.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🔄</div>
+      <h3 class="font-bold text-lg mb-2">Release-friendly updates</h3>
+      <p class="text-gray-400 text-sm">Ship a new feature? Run <code class="text-lens-primary text-xs">propose_schema_updates</code> to diff your code vs the schemas. Claude proposes targeted additions.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">📁</div>
+      <h3 class="font-bold text-lg mb-2">Multi-repo</h3>
+      <p class="text-gray-400 text-sm">Monorepos with multiple <code class="text-lens-primary text-xs">.loganalysis/</code> folders auto-discovered. Each service brings its own schemas.</p>
+    </div>
+
+    <div class="card-glow bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-3xl mb-3">🔒</div>
+      <h3 class="font-bold text-lg mb-2">Privacy-first</h3>
+      <p class="text-gray-400 text-sm">Extension makes zero outbound calls. Schemas are plain JSON in your repo. Claude Code handles all data flow under its existing trust boundary.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── INSTALL ────────────────────────────────────────────────────────── -->
+<section id="install" class="bg-lens-surface border-y border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Installation</h2>
+    <p class="text-gray-400 text-center mb-12">~30 seconds. No API key. No clone. No config files.</p>
+
+    <div class="bg-lens-card border border-lens-border rounded-xl p-6 mb-10">
+      <h3 class="font-bold text-lg mb-3 text-lens-primary">Requirements</h3>
+      <ul class="space-y-2 text-gray-300 text-sm">
+        <li class="flex gap-3"><span class="text-lens-primary">✓</span> <strong>VS Code 1.85+</strong> or <strong>Cursor</strong> (VS Code fork)</li>
+        <li class="flex gap-3"><span class="text-lens-primary">✓</span> <strong>One MCP-aware AI client</strong> installed: <strong>Claude Code</strong>, <strong>GitHub Copilot Chat</strong>, or <strong>Cursor</strong>'s built-in AI</li>
+        <li class="flex gap-3"><span class="text-lens-primary">✓</span> <strong>Node.js 18+</strong> on PATH (used to spawn the MCP server)</li>
+      </ul>
+      <p class="text-gray-400 text-xs mt-3">LogLens auto-writes the MCP config to all three client locations (<code class="text-lens-primary">.mcp.json</code>, <code class="text-lens-primary">.vscode/mcp.json</code>, <code class="text-lens-primary">.cursor/mcp.json</code>) on Setup — works with whichever you have or install later.</p>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+        <div class="flex items-start">
+          <span class="step-num">1</span>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-2">Install LogLens from VS Code Marketplace</h3>
+            <p class="text-gray-400 text-sm mb-3">Open the Extensions panel (<code class="text-lens-primary">Ctrl+Shift+X</code>), search for <strong>LogLens</strong>, click Install.</p>
+            <p class="text-gray-500 text-xs">Or via CLI:</p>
+            <div class="code-block mt-2">
+              <span class="comment"># Install from marketplace</span>
+              <br>code --install-extension loglens.loglens-vscode
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+        <div class="flex items-start">
+          <span class="step-num">2</span>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-2">Open your service repo in VS Code</h3>
+            <p class="text-gray-400 text-sm">LogLens activates and shows a notification:</p>
+            <div class="mt-3 bg-lens-surface border border-lens-border rounded-lg p-3 text-sm">
+              <div class="font-semibold text-gray-200 mb-1">💡 LogLens is installed</div>
+              <div class="text-gray-400 text-xs">Set up Claude Code MCP integration so you can generate or use log-analysis schemas in chat?</div>
+              <div class="mt-3 flex gap-2">
+                <span class="bg-lens-primary text-lens-bg text-xs px-3 py-1 rounded font-semibold">Setup</span>
+                <span class="bg-lens-border text-gray-300 text-xs px-3 py-1 rounded">Later</span>
+              </div>
+            </div>
+            <p class="text-gray-400 text-sm mt-3">Click <strong>Setup</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+        <div class="flex items-start">
+          <span class="step-num">3</span>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-2">MCP config is written for all clients</h3>
+            <p class="text-gray-400 text-sm mb-3">LogLens writes the same MCP server entry to <code class="text-lens-primary">.mcp.json</code> (Claude Code), <code class="text-lens-primary">.vscode/mcp.json</code> (Copilot Chat), and <code class="text-lens-primary">.cursor/mcp.json</code> (Cursor). Reload VS Code when prompted.</p>
+            <div class="code-block">
+              <span class="string">{</span><br>
+              &nbsp;&nbsp;<span class="keyword">"mcpServers"</span>: <span class="string">{</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"loglens"</span>: <span class="string">{</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"command"</span>: <span class="string">"node"</span>,<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"args"</span>: [<span class="string">"&lt;loglens-path&gt;/dist/mcp-server.mjs"</span>, ...]<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">}</span><br>
+              &nbsp;&nbsp;<span class="string">}</span><br>
+              <span class="string">}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+        <div class="flex items-start">
+          <span class="step-num">4</span>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-2">Generate a schema (first-time only)</h3>
+            <p class="text-gray-400 text-sm mb-3">In Claude Code chat:</p>
+            <div class="code-block text-gray-200">
+              <span class="text-blue-400">›</span> Use LogLens to scan this codebase and generate a starter .loganalysis schema
+            </div>
+            <p class="text-gray-400 text-sm mt-3">Claude scans, drafts schemas, asks you to confirm, then writes them. <strong>Commit the generated <code class="text-lens-primary">.loganalysis/</code> folder to git.</strong> Teammates inherit it on next pull.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-lens-card border border-lens-primary/30 rounded-xl p-6">
+        <div class="flex items-start">
+          <span class="step-num">5</span>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-2">Investigate</h3>
+            <p class="text-gray-400 text-sm mb-3">From now on, in any Claude Code chat:</p>
+            <div class="code-block text-gray-200 space-y-1">
+              <div><span class="text-blue-400">›</span> Use LogLens to investigate: users seeing 500 errors at checkout</div>
+              <div><span class="text-blue-400">›</span> Use LogLens to analyze these logs: [paste]</div>
+              <div><span class="text-blue-400">›</span> Use LogLens to explain the src/payments module</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ───────────────────────────────────────────────────── -->
+<section id="how-it-works" class="max-w-6xl mx-auto px-6 py-24">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">How it works</h2>
+  <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+    The extension never talks to an LLM. All intelligence runs inside Claude Code via MCP tools.
+  </p>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-lens-primary font-bold text-sm uppercase tracking-wide mb-3">1 · VS Code Extension</div>
+      <h3 class="font-bold text-lg mb-3">Thin auto-installer</h3>
+      <ul class="space-y-2 text-gray-400 text-sm">
+        <li>• Detects missing <code class="text-lens-primary text-xs">.mcp.json</code></li>
+        <li>• One-click setup writes config</li>
+        <li>• Schema explorer tree view</li>
+        <li>• NO LLM calls</li>
+        <li>• NO API keys</li>
+      </ul>
+    </div>
+    <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-lens-primary font-bold text-sm uppercase tracking-wide mb-3">2 · Bundled MCP Server</div>
+      <h3 class="font-bold text-lg mb-3">10 schema-aware tools</h3>
+      <ul class="space-y-2 text-gray-400 text-sm">
+        <li>• Reads <code class="text-lens-primary text-xs">.loganalysis/</code> on demand</li>
+        <li>• Pattern matches log lines</li>
+        <li>• Scans codebase for loggers</li>
+        <li>• Validates schemas pre-write</li>
+        <li>• Proposes targeted updates</li>
+      </ul>
+    </div>
+    <div class="bg-lens-card border border-lens-border rounded-xl p-6">
+      <div class="text-lens-primary font-bold text-sm uppercase tracking-wide mb-3">3 · Claude Code</div>
+      <h3 class="font-bold text-lg mb-3">Does the reasoning</h3>
+      <ul class="space-y-2 text-gray-400 text-sm">
+        <li>• Reads <code class="text-lens-primary text-xs">.mcp.json</code></li>
+        <li>• Spawns MCP server subprocess</li>
+        <li>• Calls tools in chat</li>
+        <li>• Uses its own LLM</li>
+        <li>• Writes schema files</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mt-12 bg-lens-card border border-lens-border rounded-xl p-6 max-w-3xl mx-auto">
+    <h3 class="font-bold text-lg mb-3 text-center">Team workflow</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <div class="text-lens-primary font-semibold text-sm mb-2">Schema author (once per repo)</div>
+        <ol class="space-y-1 text-gray-400 text-sm">
+          <li>1. Install LogLens</li>
+          <li>2. Click Setup → reload</li>
+          <li>3. Ask Claude: "Generate a schema"</li>
+          <li>4. Review + commit <code class="text-lens-primary text-xs">.loganalysis/</code></li>
+        </ol>
+      </div>
+      <div>
+        <div class="text-lens-primary font-semibold text-sm mb-2">Every teammate</div>
+        <ol class="space-y-1 text-gray-400 text-sm">
+          <li>1. <code class="text-lens-primary text-xs">git pull</code></li>
+          <li>2. Install LogLens</li>
+          <li>3. Click Setup → reload</li>
+          <li>4. Talk to Claude — no schema work</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TOOLS ──────────────────────────────────────────────────────────── -->
+<section id="tools" class="bg-lens-surface border-y border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">11 MCP tools exposed to Claude Code</h2>
+    <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+      All tools available in any Claude Code chat. No setup beyond the one-click install.
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">list_issue_analyses</code>
+        <p class="text-gray-400 text-sm mt-2">List issue categories (api-errors, auth-failures, etc.). Handles monorepos by grouping issues per repo.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">get_general_context</code>
+        <p class="text-gray-400 text-sm mt-2">Load repo overview: service description, correlation keys, modules, noise filters.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">get_issue_analysis</code>
+        <p class="text-gray-400 text-sm mt-2">Full schema for one issue: error patterns, playbooks, related fields.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">start_investigation</code>
+        <p class="text-gray-400 text-sm mt-2">3-step guided flow: description → ID prompt → Loki queries + playbook.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">analyze_logs</code>
+        <p class="text-gray-400 text-sm mt-2">Pattern-match raw log text against known error patterns. No LLM call.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">scan_codebase_for_loggers</code>
+        <p class="text-gray-400 text-sm mt-2">Walk the codebase, detect logger libraries, sample error messages — feeds AI schema generation.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">get_schema_template</code>
+        <p class="text-gray-400 text-sm mt-2">Return exact required JSON shape with valid examples — for AI to follow before writing files.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">validate_schema</code>
+        <p class="text-gray-400 text-sm mt-2">Dry-run validate a JSON string before writing to disk. Returns ✅ or specific errors.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">propose_schema_updates</code>
+        <p class="text-gray-400 text-sm mt-2">Diff your codebase vs current schemas. Suggests new issues, modules, and patterns to add.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">list_module_files</code>
+        <p class="text-gray-400 text-sm mt-2">Return file list + structural excerpts for a folder. Powers module Q&A.</p>
+      </div>
+      <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+        <code class="text-lens-primary font-mono text-sm font-semibold">reload_schemas</code>
+        <p class="text-gray-400 text-sm mt-2">Force re-read of all schema files. Includes folder inspection + validation errors on failure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SCHEMA STRUCTURE ───────────────────────────────────────────────── -->
+<section class="max-w-6xl mx-auto px-6 py-24">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Schema structure</h2>
+  <p class="text-gray-400 text-center mb-12">Plain JSON. Lives in your repo. Easy to review in PRs.</p>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div>
+      <h3 class="font-bold text-lg mb-3">Folder layout</h3>
+      <div class="code-block">
+        <span class="comment"># Committed to your repo</span><br>
+        .loganalysis/<br>
+        ├── manifest.json                       <span class="comment">← Index</span><br>
+        ├── general-context-schema.json         <span class="comment">← Service overview</span><br>
+        ├── api-errors-analysis-schema.json     <span class="comment">← One per issue</span><br>
+        ├── auth-errors-analysis-schema.json<br>
+        ├── database-errors-analysis-schema.json<br>
+        └── ...
+      </div>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg mb-3">Manifest example</h3>
+      <div class="code-block">
+        <span class="string">{</span><br>
+        &nbsp;&nbsp;<span class="keyword">"repo"</span>: <span class="string">"my-service"</span>,<br>
+        &nbsp;&nbsp;<span class="keyword">"issueAnalyses"</span>: [<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">{</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"id"</span>: <span class="string">"api-errors"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"file"</span>: <span class="string">"api-errors-analysis-schema.json"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"keywords"</span>: [<span class="string">"error"</span>, <span class="string">"500"</span>, <span class="string">"timeout"</span>],<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">"primaryCorrelationId"</span>: <span class="string">"requestId"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">}</span><br>
+        &nbsp;&nbsp;]<br>
+        <span class="string">}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EXAMPLE PROMPTS ────────────────────────────────────────────────── -->
+<section class="bg-lens-surface border-y border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Example prompts</h2>
+    <p class="text-gray-400 text-center mb-12">Real prompts you can paste into Claude Code chat — grouped by what you're trying to do.</p>
+
+    <div class="max-w-3xl mx-auto space-y-10">
+
+      <!-- ─── DEBUG AN INCIDENT ─── -->
+      <div>
+        <h3 class="text-lg font-bold mb-1">🚨 Debug an incident</h3>
+        <p class="text-gray-500 text-sm mb-4">Most common path. Describe the symptom; Claude guides you through evidence collection.</p>
+        <div class="space-y-3">
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Start investigation</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to investigate: users can't sign in after the latest deploy</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">start_investigation</code></div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Investigate with an ID already in hand</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to investigate this issue with requestId req-abc-123</div>
+            <div class="text-xs text-gray-500">↳ <code class="text-lens-primary">start_investigation</code> skips straight to query templates + playbook</div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Analyze pasted logs</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to analyze these logs and tell me the root cause: [paste your log block]</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">analyze_logs</code> — pattern matches without an LLM call</div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Drill into one issue category</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to show me everything you know about the api-errors category</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">get_issue_analysis</code> — returns full schema for that issue</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── EXPLORE WHAT'S AVAILABLE ─── -->
+      <div>
+        <h3 class="text-lg font-bold mb-1">🔭 Explore what's available</h3>
+        <p class="text-gray-500 text-sm mb-4">When you're not sure where to start, or onboarding a new teammate.</p>
+        <div class="space-y-3">
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">List all issue categories</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> List all issue categories LogLens knows about</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">list_issue_analyses</code></div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Show me the service overview</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to show me the service overview, correlation keys, and known modules</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">get_general_context</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SET UP SCHEMAS ─── -->
+      <div>
+        <h3 class="text-lg font-bold mb-1">🛠️ Set up schemas (first-time)</h3>
+        <p class="text-gray-500 text-sm mb-4">Schema author runs these once per repo. The result is committed to git for the team.</p>
+        <div class="space-y-3">
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Generate a starter schema</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens to scan this codebase and generate a starter .loganalysis schema</div>
+            <div class="text-xs text-gray-500">↳ chains <code class="text-lens-primary">scan_codebase_for_loggers</code> → <code class="text-lens-primary">get_schema_template</code> → <code class="text-lens-primary">validate_schema</code> → file writes → <code class="text-lens-primary">reload_schemas</code></div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Show me the schema shape</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Ask LogLens get_schema_template to show me what a valid schema looks like</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">get_schema_template</code> — returns canonical JSON shape with examples</div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Validate before writing</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens validate_schema to dry-run check this JSON before I write it: [paste]</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">validate_schema</code> — returns ✅ or specific errors</div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Pick up new files I just wrote</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Call LogLens reload_schemas — I just added new files manually</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">reload_schemas</code> — force re-read with diagnostics if anything fails</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── MAINTAIN SCHEMAS ─── -->
+      <div>
+        <h3 class="text-lg font-bold mb-1">🔄 Maintain schemas (after a release)</h3>
+        <p class="text-gray-500 text-sm mb-4">Keep schemas in sync as your codebase evolves. Schema author runs these periodically.</p>
+        <div class="space-y-3">
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Targeted update for a new feature</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens propose_schema_updates description='added background job queue' targetPath='src/jobs'</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">propose_schema_updates</code> — diffs only that folder vs current schemas</div>
+          </div>
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Quarterly drift check</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens propose_schema_updates — find any log patterns in the codebase not covered by current schemas</div>
+            <div class="text-xs text-gray-500">↳ <code class="text-lens-primary">propose_schema_updates</code> with no args → drift-check mode</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── UNDERSTAND CODE ─── -->
+      <div>
+        <h3 class="text-lg font-bold mb-1">📖 Understand code</h3>
+        <p class="text-gray-500 text-sm mb-4">For onboarding, code review, or "what does this module even do?"</p>
+        <div class="space-y-3">
+          <div class="bg-lens-card border border-lens-border rounded-xl p-5">
+            <div class="text-lens-primary text-xs font-semibold uppercase tracking-wide mb-2">Explain a module</div>
+            <div class="font-mono text-sm text-gray-200 mb-1"><span class="text-blue-400">›</span> Use LogLens list_module_files to explain src/auth — what does it do and where can it fail?</div>
+            <div class="text-xs text-gray-500">↳ calls <code class="text-lens-primary">list_module_files</code> — returns file inventory + structural excerpts</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── FAQ ────────────────────────────────────────────────────────────── -->
+<section id="faq" class="max-w-3xl mx-auto px-6 py-24">
+  <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">FAQ</h2>
+  <div class="space-y-3">
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>Do I need an Anthropic or OpenAI API key?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">No. LogLens uses Claude Code's own LLM via MCP. As long as you're logged into Claude Code, you're good. Zero per-token cost from LogLens.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>What if I don't use Claude Code?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">LogLens works with three clients today: <strong>Claude Code</strong> (reads <code class="text-lens-primary text-xs">.mcp.json</code>), <strong>GitHub Copilot Chat</strong> (reads <code class="text-lens-primary text-xs">.vscode/mcp.json</code>), and <strong>Cursor</strong>'s built-in AI (reads <code class="text-lens-primary text-xs">.cursor/mcp.json</code>). Setup writes all three on your behalf.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>How is this different from generic AI debugging?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">Generic AI gets your error message and improvises. LogLens gives Claude your codified domain knowledge — module names, correlation IDs, known error patterns with root causes, playbooks. Less hallucination, more deterministic flows.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>Do schemas live in my repo? What about privacy?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">Schemas are plain JSON in <code class="text-lens-primary text-xs">.loganalysis/</code>. Commit them to your repo so teammates inherit. The extension makes zero outbound network calls. Claude Code controls all data flow under its existing trust boundary.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>How do schemas evolve with my code?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">After a release, run <code class="text-lens-primary text-xs">propose_schema_updates</code> in chat. Claude diffs your code vs the schemas and proposes additions. Review, commit, ship. Teammates get the update via <code class="text-lens-primary text-xs">git pull</code>.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>Does it work with my logging library?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">Yes. <code class="text-lens-primary text-xs">scan_codebase_for_loggers</code> auto-detects winston, pino, log4js, @tsed/logger, bunyan, slf4j, Python <code class="text-lens-primary text-xs">logging</code>, Go zap, logrus, and more. Schemas are framework-agnostic — they just describe your modules and error patterns.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>Can teammates use schemas without installing LogLens?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">Each teammate installs LogLens (one-click from Marketplace). They click "Setup" once → done. They never need to author schemas — those are inherited via git.</p>
+    </details>
+
+    <details class="bg-lens-card border border-lens-border rounded-xl p-5">
+      <summary class="font-semibold flex items-center justify-between">
+        <span>What happens during incidents?</span>
+        <span class="arrow text-lens-primary">▶</span>
+      </summary>
+      <p class="text-gray-400 text-sm mt-3">Open Claude Code → describe the symptom → LogLens guides you to the right ID → returns the exact Loki query → matches incoming logs to known patterns → suggests next steps. Triage in seconds, not hours.</p>
+    </details>
+
+  </div>
+</section>
+
+<!-- ─── CTA ────────────────────────────────────────────────────────────── -->
+<section class="bg-gradient-to-b from-lens-surface to-lens-bg border-t border-lens-border">
+  <div class="max-w-3xl mx-auto px-6 py-24 text-center">
+    <h2 class="text-3xl md:text-5xl font-bold mb-6">Ready to investigate?</h2>
+    <p class="text-gray-400 mb-10 text-lg">Install LogLens, set up MCP in one click, and start asking Claude Code about your production logs.</p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="https://marketplace.visualstudio.com/items?itemName=loglens.loglens-vscode" class="bg-lens-primary hover:bg-lens-primary-bright text-lens-bg font-semibold px-8 py-4 rounded-lg text-lg transition-colors">Install from Marketplace</a>
+      <a href="https://github.com/your-org/loglens-vscode" class="bg-lens-card hover:bg-lens-border border border-lens-border font-semibold px-8 py-4 rounded-lg text-lg transition-colors">Star on GitHub ★</a>
+    </div>
+    <p class="text-gray-500 text-sm mt-8">MIT licensed · Open source · Built on the Model Context Protocol</p>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─────────────────────────────────────────────────────────── -->
+<footer class="bg-lens-bg border-t border-lens-border">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div>
+        <div class="flex items-center gap-2 font-bold mb-3">
+          <img src="assets/logo-mark.svg" alt="" width="24" height="24">
+          <span class="gradient-text">LogLens</span>
+        </div>
+        <p class="text-gray-500 text-sm">AI log investigator for Claude Code.</p>
+      </div>
+      <div>
+        <div class="font-semibold text-sm mb-3 text-gray-300">Product</div>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#features" class="hover:text-lens-primary">Features</a></li>
+          <li><a href="#install" class="hover:text-lens-primary">Install</a></li>
+          <li><a href="#tools" class="hover:text-lens-primary">MCP Tools</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-sm mb-3 text-gray-300">Resources</div>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="https://github.com/your-org/loglens-vscode" class="hover:text-lens-primary">GitHub</a></li>
+          <li><a href="https://github.com/your-org/loglens-vscode/issues" class="hover:text-lens-primary">Report an issue</a></li>
+          <li><a href="https://modelcontextprotocol.io/" class="hover:text-lens-primary">About MCP</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-sm mb-3 text-gray-300">Built with</div>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="https://claude.com/claude-code" class="hover:text-lens-primary">Claude Code</a></li>
+          <li><a href="https://modelcontextprotocol.io/" class="hover:text-lens-primary">Model Context Protocol</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-lens-border pt-6 text-sm text-gray-500 flex flex-col md:flex-row justify-between gap-4">
+      <div>MIT licensed · © LogLens contributors</div>
+      <div>Made for engineers who'd rather investigate than google their own error messages.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
