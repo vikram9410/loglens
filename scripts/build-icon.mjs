@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Build the 128×128 PNG extension icon from docs/assets/logo-mark.svg.
+ * Build PNG assets from the SVG sources.
  *
- * The Marketplace requires a PNG, not SVG. This script keeps the SVG as the
- * source of truth and generates the PNG at build time so they never drift.
+ *  - images/icon.png  (128×128)  — from logo-mark.svg → Marketplace extension icon
+ *  - images/logo.png  (960px wide) — from logo.svg → README banner (Marketplace doesn't accept SVG in README)
  *
  * Run: npm run build:icon
  */
@@ -14,27 +14,29 @@ import {fileURLToPath} from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SVG_PATH = join(ROOT, 'docs', 'assets', 'logo-mark.svg');
 const OUT_DIR = join(ROOT, 'images');
-const OUT_PATH = join(OUT_DIR, 'icon.png');
 
-const ICON_SIZE = 128;
+const TARGETS = [
+  {svg: join(ROOT, 'docs', 'assets', 'logo-mark.svg'), out: 'icon.png', width: 128},
+  {svg: join(ROOT, 'docs', 'assets', 'logo.svg'),      out: 'logo.png', width: 960},
+];
 
-function build() {
-  const svg = readFileSync(SVG_PATH);
+function build({svg: svgPath, out, width}) {
+  const svg = readFileSync(svgPath);
   const resvg = new Resvg(svg, {
-    fitTo: {mode: 'width', value: ICON_SIZE},
+    fitTo: {mode: 'width', value: width},
     background: 'rgba(0,0,0,0)',
-    font: {loadSystemFonts: false},
+    font: {loadSystemFonts: true},
   });
   const png = resvg.render().asPng();
-  mkdirSync(OUT_DIR, {recursive: true});
-  writeFileSync(OUT_PATH, png);
-  console.log(`✓ Wrote ${OUT_PATH} (${png.length} bytes, ${ICON_SIZE}×${ICON_SIZE})`);
+  const outPath = join(OUT_DIR, out);
+  writeFileSync(outPath, png);
+  console.log(`✓ Wrote ${outPath} (${png.length} bytes, width=${width}px)`);
 }
 
 try {
-  build();
+  mkdirSync(OUT_DIR, {recursive: true});
+  for (const t of TARGETS) build(t);
 } catch (e) {
   console.error('build-icon failed:', e);
   process.exit(1);

@@ -3,7 +3,16 @@
   "displayName": "LogLens — MCP Log Investigator for Claude Code",
   "description": "Schema-driven log analysis tools for Claude Code. Auto-installs an MCP server; talk to Claude Code in chat to investigate production issues or generate analysis schemas. No API key required.",
   "version": "0.1.0",
-  "publisher": "loglens",
+  "publisher": "vikram",
+  "license": "MIT",
+  "homepage": "https://github.com/vikram9410/loglens#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vikram9410/loglens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vikram9410/loglens/issues"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },

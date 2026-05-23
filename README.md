@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" alt="LogLens" width="360">
+  <img src="images/logo.png" alt="LogLens" width="360">
 </p>
 
 <p align="center">
@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=loglens.loglens-vscode"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=vikram.loglens-vscode"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://claude.com/claude-code"><img src="https://img.shields.io/badge/powered%20by-Claude%20Code-7C3AED.svg" alt="Powered by Claude Code"></a>
 </p>
@@ -255,9 +255,9 @@ Should sit idle waiting for input. If it errors, check the message — most ofte
 
 LogLens is open source under the **MIT License**. Issues, PRs, and schema contributions are welcome.
 
-- **Source:** [github.com/your-org/loglens-vscode](https://github.com/your-org/loglens-vscode)
-- **Issues:** [github.com/your-org/loglens-vscode/issues](https://github.com/your-org/loglens-vscode/issues)
-- **Discussions:** [github.com/your-org/loglens-vscode/discussions](https://github.com/your-org/loglens-vscode/discussions)
+- **Source:** [github.com/vikram9410/loglens](https://github.com/vikram9410/loglens)
+- **Issues:** [github.com/vikram9410/loglens/issues](https://github.com/vikram9410/loglens/issues)
+- **Discussions:** [github.com/vikram9410/loglens/discussions](https://github.com/vikram9410/loglens/discussions)
 
 ### Sharing schemas
 

@@ -89,5 +89,5 @@ LogLens is a VS Code extension that turns Claude Code into a domain-aware log in
 
 ---
 
-[Unreleased]: https://github.com/your-org/loglens-vscode/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/your-org/loglens-vscode/releases/tag/v0.1.0
+[Unreleased]: https://github.com/vikram9410/loglens/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/vikram9410/loglens/releases/tag/v0.1.0

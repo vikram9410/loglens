@@ -37,8 +37,8 @@ Point the host at the `docs/` directory. No build command needed — it's pure s
 
 The HTML contains a few placeholders to update:
 
-- `your-org/loglens-vscode` → your actual GitHub org/repo
-- `loglens.loglens-vscode` → your Marketplace publisher.extension ID
+- `vikram9410/loglens` → your actual GitHub org/repo
+- `vikram.loglens-vscode` → your Marketplace publisher.extension ID
 
 Search-and-replace across `index.html` once you have your real handles.
 
