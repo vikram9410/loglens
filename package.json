@@ -1,7 +1,7 @@
 {
   "name": "loglens-vscode",
-  "displayName": "LogLens — MCP Log Investigator for Claude Code",
-  "description": "Schema-driven log analysis tools for Claude Code. Auto-installs an MCP server; talk to Claude Code in chat to investigate production issues or generate analysis schemas. No API key required.",
+  "displayName": "LogLens — AI Log Investigator for Claude Code",
+  "description": "Schema-driven log analysis for Claude Code. Auto-installs an MCP server; talk to Claude in chat to investigate production issues. No API key.",
   "version": "0.1.0",
   "publisher": "vikram",
   "license": "MIT",
@@ -29,7 +29,16 @@
     "claude",
     "claude code",
     "mcp",
-    "module understanding"
+    "module understanding",
+    "loki",
+    "datadog",
+    "observability",
+    "incident",
+    "production",
+    "sre",
+    "qa",
+    "copilot",
+    "cursor"
   ],
   "main": "./dist/extension.js",
   "icon": "images/icon.png",
@@ -107,6 +116,7 @@
     "compile": "tsc -p ./ && npm run compile:mcp && npm run build:icon",
     "compile:mcp": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/mcp-server.mjs --external:vscode --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
     "build:icon": "node scripts/build-icon.mjs",
+    "build:carousel": "node scripts/build-carousel-pdf.mjs",
     "watch": "tsc -watch -p ./",
     "package": "npm run compile",
     "test": "vitest run"
@@ -121,6 +131,8 @@
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.24.0",
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^25.0.4",
     "typescript": "^5.7.0",
     "vitest": "^2.0.0"
   }

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LogLens — LinkedIn Carousel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-cream: #fef7ed;
+    --bg-peach: #ffedd5;
+    --bg-lavender: #f3e8ff;
+    --bg-mint:    #d1fae5;
+    --bg-sky:     #dbeafe;
+    --bg-yellow:  #fef3c7;
+    --bg-rose:    #ffe4e6;
+    --ink:        #0f172a;
+    --ink-soft:   #475569;
+    --ink-muted:  #64748b;
+    --purple:     #7c3aed;
+    --purple-hi:  #a78bfa;
+    --blue:       #2563eb;
+    --pink:       #ec4899;
+    --orange:     #f97316;
+    --green:      #16a34a;
+    --red:        #e11d48;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #e5e7eb;
+    margin: 0;
+    padding: 24px;
+    color: var(--ink);
+  }
+  .slide {
+    width: 1080px;
+    height: 1080px;
+    margin: 24px auto;
+    border-radius: 32px;
+    padding: 90px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.08);
+  }
+  .slide-num {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    color: var(--ink-muted);
+    z-index: 5;
+  }
+  .slide-brand {
+    position: absolute;
+    bottom: 50px;
+    left: 90px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    z-index: 5;
+  }
+  .slide-brand img { width: 40px; height: 40px; }
+  .grad-text {
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .grad-text-purple {
+    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .h1 { font-size: 96px; font-weight: 900; line-height: 1.02; letter-spacing: -4px; color: var(--ink); }
+  .h2 { font-size: 68px; font-weight: 800; line-height: 1.08; letter-spacing: -2px; color: var(--ink); }
+  .h3 { font-size: 52px; font-weight: 800; line-height: 1.15; letter-spacing: -1px; color: var(--ink); }
+  .body { font-size: 30px; line-height: 1.5; color: var(--ink-soft); }
+  .small { font-size: 22px; color: var(--ink-muted); }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .tag {
+    display: inline-block;
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 9999px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .tag-purple { background: var(--purple); }
+  .tag-pink   { background: var(--pink); }
+  .tag-orange { background: var(--orange); }
+  .tag-green  { background: var(--green); }
+  .tag-red    { background: var(--red); }
+  .card {
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 24px;
+    padding: 28px 32px;
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+  .card-soft { background: #fff; border: 2px solid #e5e7eb; border-radius: 20px; padding: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+
+  /* Decorative blob shapes */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.45;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @page { size: 1080px 1080px; margin: 0; }
+  @media print {
+    body { background: #fff; padding: 0; margin: 0; }
+    .slide { margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; page-break-after: always !important; }
+    .slide:last-child { page-break-after: auto !important; }
+    .preview-only { display: none !important; }
+  }
+  .preview-only {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 1080px;
+    margin: 0 auto 48px;
+    text-align: center;
+  }
+  .preview-only h1 { font-size: 28px; margin-bottom: 8px; }
+  .preview-only p { color: #64748b; font-size: 16px; line-height: 1.5; margin: 6px 0; }
+  .preview-only code { background: #f3e8ff; padding: 2px 8px; border-radius: 4px; color: var(--purple); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="preview-only">
+  <h1 class="grad-text">LogLens — LinkedIn Carousel (light mode)</h1>
+  <p>Run <code>npm run build:carousel</code> to regenerate <code>docs/linkedin-carousel.pdf</code></p>
+  <p>10 slides @ 1080 × 1080 — ready for LinkedIn document upload</p>
+</div>
+
+
+<!-- ──── SLIDE 1 ─ HOOK ──────────────────────────────────────────────── -->
+<div class="slide" style="background: linear-gradient(135deg, #fef7ed 0%, #f3e8ff 100%);">
+  <div class="blob" style="background: #fbcfe8; width: 500px; height: 500px; top: -150px; right: -150px;"></div>
+  <div class="blob" style="background: #c4b5fd; width: 400px; height: 400px; bottom: -100px; left: -100px;"></div>
+  <div class="slide-num">01 / 10</div>
+  <div class="content">
+    <div class="tag tag-purple" style="margin-bottom: 50px;">A new way to debug logs</div>
+    <h1 class="h1" style="margin-bottom: 36px;">
+      Your senior engineer<br>
+      knows which logs<br>
+      to check.<br>
+      <span class="grad-text">The new hire doesn't.</span>
+    </h1>
+    <p class="body" style="font-size: 36px; max-width: 800px;">
+      Here's how we fixed that for QA, Support &amp; Engineering. 👇
+    </p>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 2 ─ PROBLEM ────────────────────────────────────────────── -->
+<div class="slide" style="background: #fff;">
+  <div class="blob" style="background: #fecaca; width: 380px; height: 380px; top: -80px; right: -80px;"></div>
+  <div class="slide-num">02 / 10</div>
+  <div class="content">
+    <div class="tag tag-red" style="margin-bottom: 40px;">The hidden problem</div>
+    <h2 class="h2" style="margin-bottom: 56px;">
+      Every production incident<br>
+      needs the <span class="grad-text">same four things</span>:
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 22px;">
+      <div class="card" style="background: var(--bg-yellow); display: flex; align-items: center; gap: 24px;">
+        <span style="font-size: 44px;">📌</span>
+        <span style="font-size: 28px; font-weight: 600; color: var(--ink);">The right correlation ID — which one of the dozen?</span>
+      </div>
+      <div class="card" style="background: var(--bg-peach); display: flex; align-items: center; gap: 24px;">
+        <span style="font-size: 44px;">🔍</span>
+        <span style="font-size: 28px; font-weight: 600; color: var(--ink);">The right Loki / Datadog / CloudWatch query</span>
+      </div>
+      <div class="card" style="background: var(--bg-mint); display: flex; align-items: center; gap: 24px;">
+        <span style="font-size: 44px;">🧠</span>
+        <span style="font-size: 28px; font-weight: 600; color: var(--ink);">Knowledge of which module logs what</span>
+      </div>
+      <div class="card" style="background: var(--bg-sky); display: flex; align-items: center; gap: 24px;">
+        <span style="font-size: 44px;">⚡</span>
+        <span style="font-size: 28px; font-weight: 600; color: var(--ink);">Awareness of recurring error patterns</span>
+      </div>
+    </div>
+    <p class="small" style="margin-top: 36px; font-size: 24px; font-weight: 600;">
+      All of this lives in <span style="color: var(--red);">senior engineers' heads</span>.
+    </p>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 3 ─ MEET LOGLENS ──────────────────────────────────────── -->
+<div class="slide" style="background: linear-gradient(135deg, #f3e8ff 0%, #dbeafe 100%);">
+  <div class="blob" style="background: #a78bfa; width: 600px; height: 600px; top: -200px; left: -200px; opacity: 0.4;"></div>
+  <div class="blob" style="background: #60a5fa; width: 500px; height: 500px; bottom: -150px; right: -150px; opacity: 0.4;"></div>
+  <div class="slide-num">03 / 10</div>
+  <div class="content" style="align-items: center; text-align: center;">
+    <div class="tag" style="margin-bottom: 32px;">Meet LogLens</div>
+    <div style="background: #fff; border: 4px solid var(--ink); border-radius: 50%; padding: 36px; box-shadow: 12px 12px 0 var(--ink); margin-bottom: 40px;">
+      <img src="assets/logo-mark.svg" alt="LogLens" style="width: 180px; height: 180px;"/>
+    </div>
+    <h1 class="h1 grad-text" style="font-size: 120px; margin-bottom: 28px;">LogLens</h1>
+    <p class="body" style="font-size: 36px; max-width: 850px; margin-bottom: 40px; color: var(--ink);">
+      A VS Code extension that turns <strong>Claude Code</strong> into a<br>
+      <strong class="grad-text">domain-aware log investigator</strong> for your service.
+    </p>
+    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+      <div class="tag tag-purple">Schema-driven</div>
+      <div class="tag tag-green">No API key</div>
+      <div class="tag tag-orange">Free + Open source</div>
+      <div class="tag tag-pink">Team-first</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 4 ─ HOW IT WORKS ──────────────────────────────────────── -->
+<div class="slide" style="background: #fef7ed;">
+  <div class="blob" style="background: #fed7aa; width: 400px; height: 400px; top: -100px; right: -100px;"></div>
+  <div class="slide-num">04 / 10</div>
+  <div class="content">
+    <div class="tag tag-orange" style="margin-bottom: 36px;">How it works</div>
+    <h2 class="h2" style="margin-bottom: 56px;">
+      A <span class="grad-text">small JSON folder</span><br>
+      in your repo describes your service.
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      <div class="card" style="display: flex; align-items: center; gap: 32px; background: var(--bg-lavender);">
+        <div style="background: var(--purple); color: #fff; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; flex-shrink: 0;">1</div>
+        <div>
+          <p style="font-size: 30px; font-weight: 800; margin-bottom: 6px; color: var(--ink);">Schema author runs once</p>
+          <p style="font-size: 22px; color: var(--ink-soft);">Asks Claude to scan the codebase. AI generates <code class="mono" style="background: #fff; padding: 2px 6px; border-radius: 4px; color: var(--purple);">.loganalysis/</code> files.</p>
+        </div>
+      </div>
+      <div class="card" style="display: flex; align-items: center; gap: 32px; background: var(--bg-mint);">
+        <div style="background: var(--green); color: #fff; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; flex-shrink: 0;">2</div>
+        <div>
+          <p style="font-size: 30px; font-weight: 800; margin-bottom: 6px; color: var(--ink);">Commit to git</p>
+          <p style="font-size: 22px; color: var(--ink-soft);">Schemas become part of the repo. Every teammate inherits them on next pull.</p>
+        </div>
+      </div>
+      <div class="card" style="display: flex; align-items: center; gap: 32px; background: var(--bg-sky);">
+        <div style="background: var(--blue); color: #fff; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; flex-shrink: 0;">3</div>
+        <div>
+          <p style="font-size: 30px; font-weight: 800; margin-bottom: 6px; color: var(--ink);">Anyone debugs from chat</p>
+          <p style="font-size: 22px; color: var(--ink-soft);">QA, Support, Devs — all use Claude Code chat. No tribal knowledge needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 5 ─ THE MAGIC MOMENT ──────────────────────────────────── -->
+<div class="slide" style="background: linear-gradient(135deg, #ffe4e6 0%, #f3e8ff 100%);">
+  <div class="blob" style="background: #fbcfe8; width: 400px; height: 400px; bottom: -100px; right: -100px;"></div>
+  <div class="slide-num">05 / 10</div>
+  <div class="content">
+    <div class="tag tag-pink" style="margin-bottom: 36px;">The magic moment</div>
+    <h2 class="h2" style="margin-bottom: 48px;">Real chat. <span class="grad-text">Real workflow.</span></h2>
+    <div style="background: var(--ink); border: 4px solid var(--ink); border-radius: 24px; padding: 36px; font-family: 'JetBrains Mono', monospace; font-size: 22px; line-height: 1.65; box-shadow: 12px 12px 0 var(--ink); color: #e5e7eb;">
+      <div style="color: #94a3b8;"><span style="color: #60a5fa;">›</span> Use LogLens to investigate: users can't sign in</div>
+      <div style="margin: 18px 0; padding: 16px 20px; background: rgba(167, 139, 250, 0.18); border-left: 4px solid #a78bfa; border-radius: 8px;">
+        <div style="color: #c4b5fd; font-size: 16px; margin-bottom: 8px; font-weight: 700;">⚡ LogLens [start_investigation]</div>
+        <div style="color: #f1f5f9; font-size: 20px;">Matched: <strong>Auth Errors</strong>. Please share the <span style="color: #a78bfa;">sessionId</span>.</div>
+      </div>
+      <div style="color: #94a3b8;"><span style="color: #60a5fa;">›</span> sessionId is sess-abc-123</div>
+      <div style="margin-top: 18px; padding: 16px 20px; background: rgba(167, 139, 250, 0.18); border-left: 4px solid #a78bfa; border-radius: 8px;">
+        <div style="color: #c4b5fd; font-size: 16px; margin-bottom: 10px; font-weight: 700;">⚡ LogLens · Investigation Context</div>
+        <div style="color: #f1f5f9; font-size: 20px; line-height: 1.65;">
+          📋 Loki: <code style="color: #86efac;">{app="auth"} |= "sess-abc-123"</code><br>
+          🔍 Pattern: <code style="color: #fbbf24;">[AUTH-002] Session expired</code><br>
+          📖 Playbook: <code style="color: #c4b5fd;">PLAY-AUTH-001 — Trace the JWT refresh</code>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 6 ─ FOR EVERY ROLE ────────────────────────────────────── -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-num">06 / 10</div>
+  <div class="content">
+    <div class="tag" style="margin-bottom: 36px;">Who benefits</div>
+    <h2 class="h2" style="margin-bottom: 56px;">
+      Built for <span class="grad-text">every role</span><br>
+      that touches production.
+    </h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 26px;">
+      <div class="card" style="background: var(--bg-lavender);">
+        <div style="font-size: 64px; margin-bottom: 16px;">🧪</div>
+        <p style="font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--ink);">QA</p>
+        <p style="font-size: 22px; color: var(--ink-soft); line-height: 1.5;">Investigate failures without pinging engineering</p>
+      </div>
+      <div class="card" style="background: var(--bg-mint);">
+        <div style="font-size: 64px; margin-bottom: 16px;">🛟</div>
+        <p style="font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--ink);">Support</p>
+        <p style="font-size: 22px; color: var(--ink-soft); line-height: 1.5;">Triage customer issues in seconds, not hours</p>
+      </div>
+      <div class="card" style="background: var(--bg-sky);">
+        <div style="font-size: 64px; margin-bottom: 16px;">👩‍💻</div>
+        <p style="font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--ink);">Developers</p>
+        <p style="font-size: 22px; color: var(--ink-soft); line-height: 1.5;">Faster RCA, less context-switching</p>
+      </div>
+      <div class="card" style="background: var(--bg-yellow);">
+        <div style="font-size: 64px; margin-bottom: 16px;">🚀</div>
+        <p style="font-size: 32px; font-weight: 900; margin-bottom: 10px; color: var(--ink);">New hires</p>
+        <p style="font-size: 22px; color: var(--ink-soft); line-height: 1.5;">Day-1 productivity. No bottleneck.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 7 ─ NO API KEY ────────────────────────────────────────── -->
+<div class="slide" style="background: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%);">
+  <div class="blob" style="background: #6ee7b7; width: 500px; height: 500px; top: -150px; left: -150px;"></div>
+  <div class="blob" style="background: #93c5fd; width: 400px; height: 400px; bottom: -100px; right: -100px;"></div>
+  <div class="slide-num">07 / 10</div>
+  <div class="content" style="justify-content: center; align-items: center; text-align: center;">
+    <div class="tag tag-green" style="margin-bottom: 32px;">The unfair advantage</div>
+    <div style="font-size: 280px; font-weight: 900; line-height: 1; color: var(--ink); margin-bottom: 20px;">
+      <span class="grad-text">$0</span>
+    </div>
+    <p class="h3" style="font-size: 56px; margin-bottom: 40px;">per investigation.</p>
+    <p class="body" style="font-size: 30px; max-width: 800px; margin-bottom: 48px; color: var(--ink);">
+      LogLens uses Claude Code's own LLM via MCP.<br>
+      <strong>No Anthropic key. No OpenAI key. No per-token cost.</strong>
+    </p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 700px;">
+      <div class="card-soft" style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600;">
+        <span style="color: var(--green); font-size: 28px;">✓</span> Zero outbound calls
+      </div>
+      <div class="card-soft" style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600;">
+        <span style="color: var(--green); font-size: 28px;">✓</span> Schemas in your repo
+      </div>
+      <div class="card-soft" style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600;">
+        <span style="color: var(--green); font-size: 28px;">✓</span> No telemetry
+      </div>
+      <div class="card-soft" style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600;">
+        <span style="color: var(--green); font-size: 28px;">✓</span> MIT open source
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 8 ─ COMPOUNDING ──────────────────────────────────────── -->
+<div class="slide" style="background: #fef3c7;">
+  <div class="blob" style="background: #fcd34d; width: 400px; height: 400px; top: -100px; right: -100px;"></div>
+  <div class="slide-num">08 / 10</div>
+  <div class="content">
+    <div class="tag tag-orange" style="margin-bottom: 36px;">The compounding effect</div>
+    <h2 class="h2" style="margin-bottom: 32px;">
+      Every incident makes<br>
+      LogLens <span class="grad-text">smarter.</span>
+    </h2>
+    <p class="body" style="font-size: 30px; margin-bottom: 44px; max-width: 850px;">
+      The schema is your team's <strong style="color: var(--ink);">living, version-controlled debugging wisdom.</strong>
+    </p>
+    <div class="card" style="background: #fff;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; line-height: 1.8;">
+        <div style="color: var(--ink-muted); font-size: 18px; margin-bottom: 12px;"># A real team workflow</div>
+        <div style="display: flex; gap: 16px; padding: 10px 0;">
+          <span style="background: var(--purple); color: #fff; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 18px;">Day 1</span>
+          <span style="color: var(--ink-soft); font-weight: 500;">→ Generate starter schema. 5 issue categories.</span>
+        </div>
+        <div style="display: flex; gap: 16px; padding: 10px 0;">
+          <span style="background: var(--pink); color: #fff; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 18px;">Month 2</span>
+          <span style="color: var(--ink-soft); font-weight: 500;">→ Add patterns post-incident. 8 categories.</span>
+        </div>
+        <div style="display: flex; gap: 16px; padding: 10px 0;">
+          <span style="background: var(--blue); color: #fff; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 18px;">Month 6</span>
+          <span style="color: var(--ink-soft); font-weight: 500;">→ Refresh after big release. 12 categories.</span>
+        </div>
+        <div style="display: flex; gap: 16px; padding: 10px 0;">
+          <span style="background: var(--green); color: #fff; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 18px;">Year 1</span>
+          <span style="color: var(--ink-soft); font-weight: 500;">→ New hires onboard in days, not weeks.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 9 ─ BEFORE / AFTER ────────────────────────────────────── -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-num">09 / 10</div>
+  <div class="content">
+    <div class="tag" style="margin-bottom: 36px;">Before vs After</div>
+    <h2 class="h2" style="margin-bottom: 56px;">The difference is <span class="grad-text">hours saved</span>.</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px;">
+      <div class="card" style="background: var(--bg-rose); border-color: var(--red);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+          <span style="background: var(--red); color: #fff; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 18px;">WITHOUT</span>
+          <span style="font-size: 28px;">😩</span>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 22px; line-height: 1.7; color: var(--ink); font-weight: 500;">
+          <li>• Paste 10K logs at ChatGPT</li>
+          <li>• Get generic advice</li>
+          <li>• Guess which ID to use</li>
+          <li>• Manually craft Loki query</li>
+          <li>• Ping a senior on Slack</li>
+          <li>• Wait. Iterate. Repeat.</li>
+        </ul>
+      </div>
+      <div class="card" style="background: var(--bg-mint); border-color: var(--green);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+          <span style="background: var(--green); color: #fff; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 18px;">WITH LOGLENS</span>
+          <span style="font-size: 28px;">⚡</span>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 22px; line-height: 1.7; color: var(--ink); font-weight: 500;">
+          <li>• Describe issue in chat</li>
+          <li>• Claude asks for right ID</li>
+          <li>• Pre-filled Loki query</li>
+          <li>• Known patterns matched</li>
+          <li>• Playbook surfaces cause</li>
+          <li>• Done. Move on.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-brand">
+    <img src="assets/logo-mark.svg" alt=""/>
+    LogLens
+  </div>
+</div>
+
+
+<!-- ──── SLIDE 10 ─ CTA ──────────────────────────────────────────────── -->
+<div class="slide" style="background: linear-gradient(135deg, #f3e8ff 0%, #fef3c7 100%);">
+  <div class="blob" style="background: #a78bfa; width: 600px; height: 600px; top: -200px; left: -200px;"></div>
+  <div class="blob" style="background: #fcd34d; width: 500px; height: 500px; bottom: -150px; right: -150px;"></div>
+  <div class="slide-num">10 / 10</div>
+  <div class="content" style="justify-content: center; align-items: center; text-align: center;">
+    <img src="assets/logo-mark.svg" alt="LogLens" style="width: 140px; height: 140px; margin-bottom: 28px;"/>
+    <h1 class="h1 grad-text" style="margin-bottom: 28px;">Try LogLens today.</h1>
+    <p class="body" style="font-size: 32px; max-width: 850px; margin-bottom: 44px; color: var(--ink);">
+      Install from the VS Code Marketplace.<br>
+      Click "Setup" when prompted. Reload.<br>
+      Ask Claude Code. <strong class="grad-text">30 seconds.</strong>
+    </p>
+    <div style="display: flex; flex-direction: column; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 22px;">
+      <div class="card" style="background: #fff; display: flex; align-items: center; gap: 14px; padding: 18px 28px;">
+        <span style="color: var(--purple); font-size: 24px;">▶</span>
+        <span style="color: var(--ink); font-weight: 600;">VS Code Marketplace: <span class="grad-text">LogLens</span></span>
+      </div>
+      <div class="card" style="background: #fff; display: flex; align-items: center; gap: 14px; padding: 18px 28px;">
+        <span style="color: var(--blue); font-size: 24px;">▶</span>
+        <span style="color: var(--ink); font-weight: 600;">github.com/vikram9410/loglens</span>
+      </div>
+      <div class="card" style="background: #fff; display: flex; align-items: center; gap: 14px; padding: 18px 28px;">
+        <span style="color: var(--green); font-size: 24px;">▶</span>
+        <span style="color: var(--ink); font-weight: 600;">MIT licensed · Open source · Free forever</span>
+      </div>
+    </div>
+    <p style="margin-top: 44px; font-size: 24px; max-width: 800px; color: var(--ink-soft); font-style: italic;">
+      Made for engineers who'd rather investigate than google their own error messages.
+    </p>
+    <p style="margin-top: 20px; font-size: 22px; color: var(--ink); font-weight: 700;">
+      Follow for more on AI-powered developer tools →
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
