@@ -366,7 +366,7 @@ async function copyExplainPrompt(uri?: vscode.Uri): Promise<void> {
  *
  * Problem: setupMcpIntegration writes an absolute path containing the
  * extension version into the MCP config files (e.g.
- * `...\vikram.loglens-vscode-0.1.0\dist\mcp-server.mjs`). After a Marketplace
+ * `...\LogLensAI.loglens-0.1.0\dist\mcp-server.mjs`). After a Marketplace
  * auto-update, that folder is replaced with a new-versioned one, and the AI
  * client (Claude Code / Copilot / Cursor) can no longer spawn the MCP server.
  *

@@ -1,9 +1,9 @@
 {
-  "name": "loglens-vscode",
+  "name": "loglens",
   "displayName": "LogLens — AI Log Investigator for Claude Code",
   "description": "Schema-driven log analysis for Claude Code. Auto-installs an MCP server; talk to Claude in chat to investigate production issues. No API key.",
   "version": "0.1.0",
-  "publisher": "vikram",
+  "publisher": "LogLensAI",
   "license": "MIT",
   "homepage": "https://github.com/vikram9410/loglens#readme",
   "repository": {

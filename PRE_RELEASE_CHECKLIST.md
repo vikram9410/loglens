@@ -7,7 +7,7 @@ Step-by-step list of everything to do before publishing LogLens to the VS Code M
 ## 1️⃣ Identity & branding (do this first)
 
 - [ ] **Pick a Marketplace publisher name** (e.g. `your-org-name` or your personal handle)
-- [ ] **Confirm the extension ID** in [package.json](package.json) — currently `vikram.loglens-vscode`. Format is `<publisher>.<name>`.
+- [ ] **Confirm the extension ID** in [package.json](package.json) — currently `LogLensAI.loglens`. Format is `<publisher>.<name>`.
 - [ ] **Update `publisher` field** in `package.json` to match your registered publisher name
 - [x] **Add an icon** — ✅ Done. SVG source at `docs/assets/logo-mark.svg`, 128×128 PNG auto-generated at `images/icon.png` via `npm run build:icon` (chained into `npm run compile`). Wired into `package.json` as `"icon": "images/icon.png"`.
 - [ ] **Add a LICENSE file** at the project root. MIT is recommended:
@@ -52,7 +52,7 @@ Search-and-replace these in the codebase:
 
 - [ ] `vikram9410/loglens` → your real GitHub `<org>/<repo>` path
   - Files: [README.md](README.md), [docs/index.html](docs/index.html), [CHANGELOG.md](CHANGELOG.md)
-- [ ] `vikram.loglens-vscode` → your real `<publisher>.<name>`
+- [ ] `LogLensAI.loglens` → your real `<publisher>.<name>`
   - Files: [README.md](README.md), [docs/index.html](docs/index.html)
 - [ ] `loglens` publisher field → your registered publisher
   - File: [package.json](package.json)
